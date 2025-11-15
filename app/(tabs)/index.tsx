@@ -8,6 +8,7 @@ import { AuthContext } from "@/lib/AuthContext";
 import api from "@/services/api";
 import { colors, fontSize, spacing } from "@/theme";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, { useContext, useEffect, useState } from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,6 +20,8 @@ export default function IndexPage() {
   const [featuredMovie, setFeaturedMovie] = useState<Movie>();
   const [loading, setLoading] = useState(true);
   const { user } = useContext(AuthContext);
+
+  const router = useRouter();
 
   useEffect(() => {
     if (!user) {
@@ -99,7 +102,10 @@ export default function IndexPage() {
   };
 
   const handleCardPress = (item: Movie) => {
-    console.log("Go to details of:", item.title || item.name);
+    router.push({
+      pathname: "/movie/[id]",
+      params: { id: item.id.toString() },
+    });
   };
 
   const renderFeaturedMovie = () => {
