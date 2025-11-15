@@ -1,3 +1,4 @@
+import { PUBLIC_SEGMENTS } from "@/constants/routes";
 import { useRouter, useSegments } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { createContext, ReactNode, useEffect, useState } from "react";
@@ -56,15 +57,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (loading) return;
 
-    const publicRoutes = ["login", "register", "register-success"];
-    const inPublicGroup = publicRoutes.includes(segments[0]);
+    const inPublicGroup = PUBLIC_SEGMENTS.includes(segments[0]);
 
     if (!user && !inPublicGroup) {
       // not logged in and not on a public route
       router.replace("/login");
     } else if (user && ["login", "register"].includes(segments[0])) {
       // logged in but on login/register, redirect to home
-      router.replace("/home");
+      router.replace("/(tabs)");
     }
   }, [user, segments, loading]);
 

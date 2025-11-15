@@ -7,7 +7,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "index",
-          headerShown: true,
+          headerShown: false,
         }}
       />
     </Tabs>
