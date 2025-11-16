@@ -5,6 +5,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 export type TabOption<T extends string> = {
   key: T;
   label: string;
+  icon?: React.ReactNode;
 };
 
 interface ToggleTabsProps<T extends string> {
@@ -31,6 +32,9 @@ function ToggleTabs<T extends string>({
             style={styles.tab}
             onPress={() => onToggle(option.key)}
           >
+            {option.icon && (
+              <View style={styles.iconContainer}>{option.icon}</View>
+            )}
             <Text style={[styles.tabText, isActive && styles.activeTabText]}>
               {option.label}
             </Text>
@@ -55,6 +59,13 @@ const styles = StyleSheet.create({
   tab: {
     flex: 1,
     paddingVertical: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 6,
+  },
+
+  iconContainer: {
     justifyContent: "center",
     alignItems: "center",
   },
