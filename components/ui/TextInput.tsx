@@ -10,6 +10,9 @@ type TextInputProps = {
   secureTextEntry?: boolean;
   error?: string;
   keyboardType?: "default" | "email-address" | "numeric" | "phone-pad";
+  multiline?: boolean;
+  numberOfLines?: number;
+  textAlignVertical?: "top" | "bottom";
 };
 
 export default function TextInput({
@@ -20,6 +23,9 @@ export default function TextInput({
   secureTextEntry = false,
   error,
   keyboardType = "default",
+  multiline = false,
+  numberOfLines = 1,
+  textAlignVertical = "top",
 }: TextInputProps) {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -35,6 +41,9 @@ export default function TextInput({
         placeholderTextColor={colors.textSecondary}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
+        multiline={multiline}
+        numberOfLines={numberOfLines}
+        textAlignVertical={textAlignVertical}
         style={[
           styles.input,
           {

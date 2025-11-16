@@ -1,5 +1,6 @@
 export const colors = {
   primary: "#4BB543", // greenish accent
+  warning: "#FFD700", // yellow
   secondary: "#03DAC6", // optional secondary accent
   background: "#121212", // dark background
   card: "#1E1E1E", // input & card background
@@ -7,6 +8,7 @@ export const colors = {
   textSecondary: "#AAAAAA", // secondary text
   error: "#FF4D4F",
   success: "#4BB543",
+  border: "#333333",
 };
 
 export const fontSize = {
