@@ -1,12 +1,33 @@
 import { ContentCardProps } from "@/interfaces/Movie";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from "react-native";
 import { TMDB_IMAGE_BASE } from "../constants/tmdb";
 
-const ContentCard: React.FC<ContentCardProps> = ({ content, onPress }) => {
+interface ContentCardExtendedProps extends ContentCardProps {
+  style?: StyleProp<ViewStyle>;
+  media_type?: "movie" | "tv";
+}
+
+const ContentCard: React.FC<ContentCardExtendedProps> = ({
+  content,
+  onPress,
+  style,
+  media_type,
+}) => {
   return (
-    <TouchableOpacity style={styles.card} onPress={() => onPress(content)}>
+    <TouchableOpacity
+      style={[styles.card, style]}
+      onPress={() => onPress(content)}
+    >
       <Image
         source={{ uri: `${TMDB_IMAGE_BASE}${content.poster_path}` }}
         style={styles.image}
@@ -19,11 +40,21 @@ const ContentCard: React.FC<ContentCardProps> = ({ content, onPress }) => {
         locations={[0, 0.5, 1]}
       />
 
+      {/* Rating */}
       <View style={styles.ratingContainer}>
         <Text style={styles.ratingText}>
-          ⭐ {content.vote_average.toFixed(1)}
+          ⭐ {content?.vote_average?.toFixed(1)}
         </Text>
       </View>
+
+      {/* Media type badge */}
+      {media_type && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            {media_type === "movie" ? "Movie" : "TV Series"}
+          </Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
@@ -57,20 +88,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "bold",
   },
-  titleContainer: {
+  badge: {
     position: "absolute",
-    bottom: 0,
-    width: "100%",
-    backgroundColor: "rgba(0,0,0,0.6)",
-    padding: 4,
+    top: 6,
+    left: 6,
+    backgroundColor: "#E50914",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
-  titleText: {
+  badgeText: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "bold",
-    textAlign: "center",
   },
-
   gradientOverlay: {
     position: "absolute",
     bottom: 0,

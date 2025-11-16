@@ -10,6 +10,14 @@ export default function TabsLayout() {
           headerShown: false,
         }}
       />
+
+      <Tabs.Screen
+        name="search"
+        options={{
+          title: "Search",
+          headerShown: false,
+        }}
+      />
     </Tabs>
   );
 }
