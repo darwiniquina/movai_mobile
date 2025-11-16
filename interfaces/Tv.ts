@@ -1,8 +1,7 @@
 import { Cast } from "./Cast";
-import { Tv } from "./Tv";
 import { Video } from "./Video";
 
-export interface Movie {
+export interface Tv {
   id: number;
   title?: string;
   overview?: string;
@@ -22,8 +21,8 @@ export interface Movie {
   backdrop_path: string;
 }
 
-export interface ContentCardProps {
-  content: Movie | Tv;
-  onPress: (content: Movie | Tv) => void;
+export interface TvCardProps {
+  Tv: Tv;
+  onPress: (Tv: Tv) => void;
   loading?: boolean;
 }
