@@ -41,11 +41,13 @@ const ContentCard: React.FC<ContentCardExtendedProps> = ({
       />
 
       {/* Rating */}
-      <View style={styles.ratingContainer}>
-        <Text style={styles.ratingText}>
-          ⭐ {content?.vote_average?.toFixed(1)}
-        </Text>
-      </View>
+      {content?.vote_average != null && (
+        <View style={styles.ratingContainer}>
+          <Text style={styles.ratingText}>
+            ⭐ {Number(content.vote_average).toFixed(1)}
+          </Text>
+        </View>
+      )}
 
       {/* Media type badge */}
       {media_type && (

@@ -9,7 +9,8 @@ import { Video } from "@/interfaces/Video";
 import readableDate from "@/services//readableDate";
 import api from "@/services/api";
 
-import { colors, fontSize } from "@/theme";
+import { borderRadius, colors, fontSize, spacing } from "@/theme";
+import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -40,12 +41,23 @@ const TvDetail = () => {
   const [recommended, setRecommended] = useState<Tv[]>([]);
   const [trailer, setTrailer] = useState<Video | null>(null);
   const [loading, setLoading] = useState(true);
-
   const [playing, setPlaying] = useState(false);
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
 
   useEffect(() => {
     fetchTvData();
+    checkWatchlistStatus();
   }, [id]);
+
+  const checkWatchlistStatus = async () => {
+    try {
+      const response = await api.get(`/watchlist/${id}`);
+      setIsInWatchlist(response.data?.exists || false);
+    } catch (error) {
+      console.error("Error checking watchlist status:", error);
+    }
+  };
 
   const fetchTvData = async () => {
     try {
@@ -106,6 +118,27 @@ const TvDetail = () => {
       pathname: "/person/[id]",
       params: { id: person.id.toString() },
     });
+  };
+
+  const toggleWatchlist = async () => {
+    if (!Tv) return;
+
+    try {
+      setWatchlistLoading(true);
+
+      if (!isInWatchlist) {
+        await api.post("/watchlist", {
+          tmdb_id: Tv.id,
+          type: "tv",
+          status: "planning",
+        });
+        setIsInWatchlist(true);
+      }
+    } catch (error) {
+      console.error("Error toggling watchlist:", error);
+    } finally {
+      setWatchlistLoading(false);
+    }
   };
 
   if (loading) {
@@ -210,6 +243,36 @@ const TvDetail = () => {
                   ))}
                 </View>
               )}
+
+              {/* Watchlist Button */}
+              <TouchableOpacity
+                onPress={toggleWatchlist}
+                disabled={watchlistLoading}
+                style={[
+                  styles.watchlistButton,
+                  isInWatchlist && styles.watchlistButtonActive,
+                ]}
+              >
+                <Ionicons
+                  name={
+                    isInWatchlist ? "checkmark-circle" : "add-circle-outline"
+                  }
+                  size={20}
+                  color={isInWatchlist ? colors.background : colors.primary}
+                />
+                <Text
+                  style={[
+                    styles.watchlistButtonText,
+                    isInWatchlist && styles.watchlistButtonTextActive,
+                  ]}
+                >
+                  {watchlistLoading
+                    ? "Loading..."
+                    : isInWatchlist
+                    ? "In Watchlist"
+                    : "Add to Watchlist"}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -470,6 +533,31 @@ const styles = StyleSheet.create({
   similarRating: {
     color: "#aaa",
     fontSize: 12,
+  },
+  watchlistButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.card,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.sm,
+    alignSelf: "flex-start",
+    gap: spacing.xs,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  watchlistButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  watchlistButtonText: {
+    color: colors.primary,
+    fontSize: fontSize.sm,
+    fontWeight: "700",
+  },
+  watchlistButtonTextActive: {
+    color: colors.background,
   },
 });
 

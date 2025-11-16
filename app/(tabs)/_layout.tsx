@@ -18,6 +18,14 @@ export default function TabsLayout() {
           headerShown: false,
         }}
       />
+
+      <Tabs.Screen
+        name="watchlist"
+        options={{
+          title: "Watchlist",
+          headerShown: false,
+        }}
+      />
     </Tabs>
   );
 }

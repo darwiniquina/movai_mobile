@@ -4,13 +4,11 @@ import ToggleTabs from "@/components/ui/ToggleTabs";
 import { TMDB_IMAGE_BASE } from "@/constants/tmdb";
 import { Cast } from "@/interfaces/Cast";
 import { Movie } from "@/interfaces/Movie";
-import { PersonCredit } from "@/interfaces/Person";
-import { Tv } from "@/interfaces/Tv";
 import { Video } from "@/interfaces/Video";
-import readableDate from "@/services//readableDate";
 import api from "@/services/api";
-
-import { colors, fontSize } from "@/theme";
+import readableDate from "@/services/readableDate";
+import { borderRadius, colors, fontSize, spacing } from "@/theme";
+import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -45,10 +43,22 @@ const MovieDetail = () => {
     "similar"
   );
   const [playing, setPlaying] = useState(false);
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
 
   useEffect(() => {
     fetchMovieData();
+    checkWatchlistStatus();
   }, [id]);
+
+  const checkWatchlistStatus = async () => {
+    try {
+      const response = await api.get(`/watchlist/${id}`);
+      setIsInWatchlist(response.data?.exists || false);
+    } catch (error) {
+      console.error("Error checking watchlist status:", error);
+    }
+  };
 
   const fetchMovieData = async () => {
     try {
@@ -115,7 +125,7 @@ const MovieDetail = () => {
     setPlaying(true);
   };
 
-  const handleCardPress = (item: Movie | Tv | PersonCredit) => {
+  const handleCardPress = (item: Movie) => {
     router.push({
       pathname: "/movie/[id]",
       params: { id: item.id.toString() },
@@ -127,6 +137,27 @@ const MovieDetail = () => {
       pathname: "/person/[id]",
       params: { id: person.id.toString() },
     });
+  };
+
+  const toggleWatchlist = async () => {
+    if (!movie) return;
+
+    try {
+      setWatchlistLoading(true);
+
+      if (!isInWatchlist) {
+        await api.post("/watchlist", {
+          tmdb_id: movie.id,
+          type: "movie",
+          status: "planning",
+        });
+        setIsInWatchlist(true);
+      }
+    } catch (error) {
+      console.error("Error toggling watchlist:", error);
+    } finally {
+      setWatchlistLoading(false);
+    }
   };
 
   if (loading) {
@@ -221,7 +252,7 @@ const MovieDetail = () => {
               </View>
 
               <Text style={styles.meta}>
-                Realesed on {readableDate(movie.release_date)}
+                Released on {readableDate(movie.release_date)}
               </Text>
 
               {/* Genres */}
@@ -234,6 +265,36 @@ const MovieDetail = () => {
                   ))}
                 </View>
               )}
+
+              {/* Watchlist Button */}
+              <TouchableOpacity
+                onPress={toggleWatchlist}
+                disabled={watchlistLoading}
+                style={[
+                  styles.watchlistButton,
+                  isInWatchlist && styles.watchlistButtonActive,
+                ]}
+              >
+                <Ionicons
+                  name={
+                    isInWatchlist ? "checkmark-circle" : "add-circle-outline"
+                  }
+                  size={20}
+                  color={isInWatchlist ? colors.background : colors.primary}
+                />
+                <Text
+                  style={[
+                    styles.watchlistButtonText,
+                    isInWatchlist && styles.watchlistButtonTextActive,
+                  ]}
+                >
+                  {watchlistLoading
+                    ? "Loading..."
+                    : isInWatchlist
+                    ? "In Watchlist"
+                    : "Add to Watchlist"}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -441,26 +502,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
   },
-  castCard: {
-    width: 100,
-    marginRight: 12,
-  },
-  castImage: {
-    width: 100,
-    height: 150,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  castName: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  castCharacter: {
-    color: "#aaa",
-    fontSize: 12,
-  },
   tabContainer: {
     flexDirection: "row",
     marginBottom: 16,
@@ -504,6 +545,31 @@ const styles = StyleSheet.create({
   similarRating: {
     color: "#aaa",
     fontSize: 12,
+  },
+  watchlistButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.card,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.sm,
+    alignSelf: "flex-start",
+    gap: spacing.xs,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  watchlistButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  watchlistButtonText: {
+    color: colors.primary,
+    fontSize: fontSize.sm,
+    fontWeight: "700",
+  },
+  watchlistButtonTextActive: {
+    color: colors.background,
   },
 });
 

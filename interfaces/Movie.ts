@@ -25,6 +25,6 @@ export interface Movie {
 
 export interface ContentCardProps {
   content: Movie | Tv | PersonCredit;
-  onPress: (content: Movie | Tv | PersonCredit) => void;
+  onPress: any;
   loading?: boolean;
 }
