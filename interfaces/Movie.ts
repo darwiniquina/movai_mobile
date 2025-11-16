@@ -1,4 +1,5 @@
 import { Cast } from "./Cast";
+import { PersonCredit } from "./Person";
 import { Tv } from "./Tv";
 import { Video } from "./Video";
 
@@ -23,7 +24,7 @@ export interface Movie {
 }
 
 export interface ContentCardProps {
-  content: Movie | Tv;
-  onPress: (content: Movie | Tv) => void;
+  content: Movie | Tv | PersonCredit;
+  onPress: (content: Movie | Tv | PersonCredit) => void;
   loading?: boolean;
 }

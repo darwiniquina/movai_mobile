@@ -14,7 +14,7 @@ import { TMDB_IMAGE_BASE } from "../constants/tmdb";
 
 interface ContentCardExtendedProps extends ContentCardProps {
   style?: StyleProp<ViewStyle>;
-  media_type?: "movie" | "tv";
+  media_type?: "movie" | "tv" | "person";
 }
 
 const ContentCard: React.FC<ContentCardExtendedProps> = ({

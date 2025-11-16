@@ -93,7 +93,10 @@ export default function Search() {
             params: { id: selectedItem.id.toString() },
           });
         } else {
-          console.log("Clicked person (not implemented yet):", selectedItem);
+          router.push({
+            pathname: "/person/[id]",
+            params: { id: selectedItem.id.toString() },
+          });
         }
       }}
     />

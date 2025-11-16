@@ -1,8 +1,11 @@
+import CastCard from "@/components/CastCard";
 import ContentCard from "@/components/ContentCard";
 import ToggleTabs from "@/components/ui/ToggleTabs";
-import { TMDB_IMAGE_BASE, TMDB_PROFILE_BASE } from "@/constants/tmdb";
+import { TMDB_IMAGE_BASE } from "@/constants/tmdb";
 import { Cast } from "@/interfaces/Cast";
 import { Movie } from "@/interfaces/Movie";
+import { PersonCredit } from "@/interfaces/Person";
+import { Tv } from "@/interfaces/Tv";
 import { Video } from "@/interfaces/Video";
 import readableDate from "@/services//readableDate";
 import api from "@/services/api";
@@ -112,10 +115,17 @@ const MovieDetail = () => {
     setPlaying(true);
   };
 
-  const handleCardPress = (item: Movie) => {
+  const handleCardPress = (item: Movie | Tv | PersonCredit) => {
     router.push({
       pathname: "/movie/[id]",
       params: { id: item.id.toString() },
+    });
+  };
+
+  const handleCastPress = (person: Cast) => {
+    router.push({
+      pathname: "/person/[id]",
+      params: { id: person.id.toString() },
     });
   };
 
@@ -239,18 +249,11 @@ const MovieDetail = () => {
               <Text style={styles.sectionTitle}>Cast</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {cast.map((person) => (
-                  <View key={person.id} style={styles.castCard}>
-                    <Image
-                      source={{ uri: TMDB_PROFILE_BASE + person.profile_path }}
-                      style={styles.castImage}
-                    />
-                    <Text style={styles.castName} numberOfLines={1}>
-                      {person.name}
-                    </Text>
-                    <Text style={styles.castCharacter} numberOfLines={1}>
-                      {person.character}
-                    </Text>
-                  </View>
+                  <CastCard
+                    key={person.id}
+                    person={person}
+                    onPress={handleCastPress}
+                  />
                 ))}
               </ScrollView>
             </View>

@@ -5,6 +5,7 @@ import ToggleTabs from "@/components/ui/ToggleTabs";
 import { TMDB_IMAGE_BASE } from "@/constants/tmdb";
 import { IndexSectionData } from "@/interfaces/Index";
 import { Movie } from "@/interfaces/Movie";
+import { PersonCredit } from "@/interfaces/Person";
 import { Tv } from "@/interfaces/Tv";
 import { AuthContext } from "@/lib/AuthContext";
 import api from "@/services/api";
@@ -107,7 +108,7 @@ export default function IndexPage() {
     }
   };
 
-  const handleCardPress = (item: Movie | Tv) => {
+  const handleCardPress = (item: Movie | Tv | PersonCredit) => {
     if (activeTab === "movies") {
       router.push(`/movie/${item.id}`);
     } else if (activeTab === "tv") {
