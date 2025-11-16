@@ -1,9 +1,11 @@
-import MovieCard from "@/components/MovieCard";
+import ContentCard from "@/components/ContentCard";
 import Button from "@/components/ui/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ToggleTabs from "@/components/ui/ToggleTabs";
 import { TMDB_IMAGE_BASE } from "@/constants/tmdb";
-import { IndexSectionData, Movie } from "@/interfaces/Movie";
+import { IndexSectionData } from "@/interfaces/Index";
+import { Movie } from "@/interfaces/Movie";
+import { Tv } from "@/interfaces/Tv";
 import { AuthContext } from "@/lib/AuthContext";
 import api from "@/services/api";
 import { colors, fontSize, spacing } from "@/theme";
@@ -17,7 +19,7 @@ export default function IndexPage() {
   const [activeTab, setActiveTab] = useState<"movies" | "tv">("movies");
   const [moviesData, setMoviesData] = useState<IndexSectionData | null>(null);
   const [tvData, setTvData] = useState<IndexSectionData | null>(null);
-  const [featuredMovie, setFeaturedMovie] = useState<Movie>();
+  const [featured, setFeatured] = useState<Movie>();
   const [loading, setLoading] = useState(true);
   const { user } = useContext(AuthContext);
 
@@ -25,7 +27,6 @@ export default function IndexPage() {
 
   useEffect(() => {
     if (!user) {
-      console.log("No user");
       setLoading(false);
       return;
     }
@@ -44,10 +45,6 @@ export default function IndexPage() {
         const topRatedResults = topRatedMovies.data?.data?.results || [];
         const upcomingResults = upcomingMovies.data?.data?.results || [];
 
-        console.log("Popular:", popularResults.length);
-        console.log("Top Rated:", topRatedResults.length);
-        console.log("Upcoming:", upcomingResults.length);
-
         setMoviesData({
           popular: popularResults,
           topRated: topRatedResults,
@@ -55,7 +52,7 @@ export default function IndexPage() {
         });
 
         if (popularResults.length > 0) {
-          setFeaturedMovie(popularResults[0]);
+          setFeatured(popularResults[0]);
         }
       } catch (error) {
         console.error("Error fetching movies:", error);
@@ -80,13 +77,14 @@ export default function IndexPage() {
       const popularResults = popularTv.data?.data?.results || [];
       const topRatedResults = topRatedTv.data?.data?.results || [];
 
-      console.log("Popular:", popularResults.length);
-      console.log("Top Rated:", topRatedResults.length);
-
       setTvData({
         popular: popularResults,
         topRated: topRatedResults,
       });
+
+      if (popularResults.length > 0) {
+        setFeatured(popularResults[0]);
+      }
     } catch (error) {
       console.error("Error fetching TV shows:", error);
     } finally {
@@ -96,25 +94,34 @@ export default function IndexPage() {
 
   const handleToggle = (tab: "movies" | "tv") => {
     setActiveTab(tab);
+
     if (tab === "tv") {
       fetchTVShows();
     }
+
+    if (tab === "movies") {
+      setFeatured(moviesData?.popular?.[0]);
+    }
+    if (tab === "tv") {
+      setFeatured(tvData?.popular?.[0]);
+    }
   };
 
-  const handleCardPress = (item: Movie) => {
-    router.push({
-      pathname: "/movie/[id]",
-      params: { id: item.id.toString() },
-    });
+  const handleCardPress = (item: Movie | Tv) => {
+    if (activeTab === "movies") {
+      router.push(`/movie/${item.id}`);
+    } else if (activeTab === "tv") {
+      router.push(`/tv/${item.id}`);
+    }
   };
 
-  const renderFeaturedMovie = () => {
-    if (!featuredMovie) return null;
+  const renderfeatured = () => {
+    if (!featured) return null;
 
     return (
       <View style={styles.featuredCard}>
         <Image
-          source={{ uri: `${TMDB_IMAGE_BASE}${featuredMovie.poster_path}` }}
+          source={{ uri: `${TMDB_IMAGE_BASE}${featured.poster_path}` }}
           style={styles.featuredImage}
           resizeMode="cover"
         />
@@ -125,30 +132,27 @@ export default function IndexPage() {
         />
 
         <View style={styles.featuredContent}>
-          {featuredMovie.vote_average != null && (
+          {featured.vote_average != null && (
             <View style={styles.ratingContainer}>
               <Text style={styles.ratingIcon}>⭐</Text>
               <Text style={styles.ratingText}>
-                {featuredMovie.vote_average.toFixed(1)}
+                {featured.vote_average.toFixed(1)}
               </Text>
               <Text style={styles.ratingOutOf}>/10</Text>
             </View>
           )}
 
           <Text style={styles.featuredTitle}>
-            {featuredMovie.title || featuredMovie.name}
+            {featured.title || featured.name}
           </Text>
 
-          {featuredMovie.overview && (
+          {featured.overview && (
             <Text style={styles.featuredOverview} numberOfLines={3}>
-              {featuredMovie.overview}
+              {featured.overview}
             </Text>
           )}
 
-          <Button
-            title="More Info"
-            onPress={() => handleCardPress(featuredMovie)}
-          />
+          <Button title="More Info" onPress={() => handleCardPress(featured)} />
         </View>
       </View>
     );
@@ -162,7 +166,11 @@ export default function IndexPage() {
         <Text style={styles.sectionTitle}>{title}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {items.map((item) => (
-            <MovieCard key={item.id} movie={item} onPress={handleCardPress} />
+            <ContentCard
+              key={item.id}
+              content={item}
+              onPress={handleCardPress}
+            />
           ))}
         </ScrollView>
       </View>
@@ -188,7 +196,7 @@ export default function IndexPage() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
-        {renderFeaturedMovie()}
+        {renderfeatured()}
 
         <View style={styles.tabsContainer}>
           <ToggleTabs

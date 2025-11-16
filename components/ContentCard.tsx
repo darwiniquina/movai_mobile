@@ -1,14 +1,14 @@
-import { MovieCardProps } from "@/interfaces/Movie";
+import { ContentCardProps } from "@/interfaces/Movie";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { TMDB_IMAGE_BASE } from "../constants/tmdb";
 
-const MovieCard: React.FC<MovieCardProps> = ({ movie, onPress }) => {
+const ContentCard: React.FC<ContentCardProps> = ({ content, onPress }) => {
   return (
-    <TouchableOpacity style={styles.card} onPress={() => onPress(movie)}>
+    <TouchableOpacity style={styles.card} onPress={() => onPress(content)}>
       <Image
-        source={{ uri: `${TMDB_IMAGE_BASE}${movie.poster_path}` }}
+        source={{ uri: `${TMDB_IMAGE_BASE}${content.poster_path}` }}
         style={styles.image}
         resizeMode="cover"
       />
@@ -21,14 +21,14 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onPress }) => {
 
       <View style={styles.ratingContainer}>
         <Text style={styles.ratingText}>
-          ⭐ {movie.vote_average.toFixed(1)}
+          ⭐ {content.vote_average.toFixed(1)}
         </Text>
       </View>
     </TouchableOpacity>
   );
 };
 
-export default MovieCard;
+export default ContentCard;
 
 const styles = StyleSheet.create({
   card: {

@@ -3,7 +3,7 @@ import * as SecureStore from "expo-secure-store";
 import { PUBLIC_ROUTES } from "../constants/routes";
 
 const api = axios.create({
-  baseURL: "http://192.168.0.122:8000/api",
+  baseURL: "http://192.168.100.203:8000/api",
 });
 
 

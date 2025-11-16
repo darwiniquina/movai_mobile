@@ -1,8 +1,7 @@
 import ContentCard from "@/components/ContentCard";
-import ToggleTabs from "@/components/ui/ToggleTabs";
 import { TMDB_IMAGE_BASE, TMDB_PROFILE_BASE } from "@/constants/tmdb";
 import { Cast } from "@/interfaces/Cast";
-import { Movie } from "@/interfaces/Movie";
+import { Tv } from "@/interfaces/Tv";
 import { Video } from "@/interfaces/Video";
 import readableDate from "@/services//readableDate";
 import api from "@/services/api";
@@ -26,82 +25,62 @@ import YoutubePlayer from "react-native-youtube-iframe";
 
 const { width, height } = Dimensions.get("window");
 
-const MovieDetail = () => {
+const TvDetail = () => {
   const router = useRouter();
   const route = useRoute();
   const { id } = route.params as { id: number };
   const playerRef = useRef(null);
 
-  const [movie, setMovie] = useState<Movie | null>(null);
+  const [Tv, setTv] = useState<Tv | null>(null);
   const [cast, setCast] = useState<Cast[]>([]);
-  const [similar, setSimilar] = useState<Movie[]>([]);
-  const [recommended, setRecommended] = useState<Movie[]>([]);
+  const [similar, setSimilar] = useState<Tv[]>([]);
+  const [recommended, setRecommended] = useState<Tv[]>([]);
   const [trailer, setTrailer] = useState<Video | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"similar" | "recommended">(
-    "similar"
-  );
+
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
-    fetchMovieData();
+    fetchTvData();
   }, [id]);
 
-  const fetchMovieData = async () => {
+  const fetchTvData = async () => {
     try {
       setLoading(true);
-      const [movieRes, similarRes] = await Promise.all([
-        api.get(`/movies/${id}`),
-        api.get(`/movies/${id}/similar`),
+      const [TvRes, similarRes] = await Promise.all([
+        api.get(`/tv/${id}`),
+        api.get(`/tv/${id}/similar`),
       ]);
 
-      const movieData = movieRes.data.data;
+      const TvData = TvRes.data.data;
       const similarData = similarRes.data.data;
 
-      setMovie(movieData);
+      setTv(TvData);
       setSimilar(similarData.results || []);
 
-      if (movieData.credits?.cast) {
-        setCast(movieData.credits.cast.slice(0, 10));
+      if (TvData.credits?.cast) {
+        setCast(TvData.credits.cast.slice(0, 10));
       }
 
-      if (movieData.videos?.results) {
+      if (TvData.videos?.results) {
         const trailerVideo =
-          movieData.videos.results.find(
+          TvData.videos.results.find(
             (video: Video) =>
               video.type === "Trailer" &&
               video.site === "YouTube" &&
               video.official
           ) ||
-          movieData.videos.results.find(
+          TvData.videos.results.find(
             (video: Video) =>
               video.type === "Trailer" && video.site === "YouTube"
           );
         setTrailer(trailerVideo || null);
       }
     } catch (error) {
-      console.error("Error fetching movie data:", error);
+      console.error("Error fetching Tv data:", error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchRecommended = async () => {
-    if (recommended.length > 0) return;
-    try {
-      const res = await api.get(`/movies/${id}/recommendations`);
-      const recommendedData = res.data.data;
-      setRecommended(recommendedData.results || []);
-    } catch (error) {
-      console.error("Error fetching recommendations:", error);
-    }
-  };
-
-  const handleTabChange = (tab: "similar" | "recommended") => {
-    if (tab === "recommended") {
-      fetchRecommended();
-    }
-    setActiveTab(tab);
   };
 
   const handleClosePlayer = () => {
@@ -112,9 +91,9 @@ const MovieDetail = () => {
     setPlaying(true);
   };
 
-  const handleCardPress = (item: Movie) => {
+  const handleCardPress = (item: Tv) => {
     router.push({
-      pathname: "/movie/[id]",
+      pathname: "/tv/[id]",
       params: { id: item.id.toString() },
     });
   };
@@ -127,12 +106,9 @@ const MovieDetail = () => {
     );
   }
 
-  if (!movie) {
+  if (!Tv) {
     return null;
   }
-
-  // Determine which movies to display based on active tab
-  const displayedMovies = activeTab === "similar" ? similar : recommended;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -162,8 +138,8 @@ const MovieDetail = () => {
             <>
               <Image
                 source={{
-                  uri: movie.backdrop_path
-                    ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
+                  uri: Tv.backdrop_path
+                    ? `https://image.tmdb.org/t/p/w1280${Tv.backdrop_path}`
                     : "https://via.placeholder.com/1280x720?text=No+Image",
                 }}
                 style={styles.backdrop}
@@ -185,39 +161,39 @@ const MovieDetail = () => {
           )}
         </View>
 
-        {/* Movie Info */}
+        {/* Tv Info */}
         <View style={styles.contentContainer}>
           <View style={styles.headerSection}>
             <Image
               source={{
-                uri: TMDB_IMAGE_BASE + movie.poster_path,
+                uri: TMDB_IMAGE_BASE + Tv.poster_path,
               }}
               style={styles.poster}
             />
             <View style={styles.headerInfo}>
-              <Text style={styles.title}>{movie.title}</Text>
+              <Text style={styles.title}>{Tv.title}</Text>
               <View style={styles.metaInfo}>
-                <Text style={styles.tagline}>"{movie.tagline || ""}"</Text>
+                <Text style={styles.tagline}>"{Tv.tagline || ""}"</Text>
 
                 <View style={styles.ratingContainer}>
                   <Text style={styles.rating}>
-                    ⭐ {movie.vote_average.toFixed(1)}
+                    ⭐ {Tv.vote_average.toFixed(1)}
                   </Text>
                 </View>
                 <Text style={styles.metaInfoSeparator}>•</Text>
-                <Text style={styles.meta}>Movie</Text>
+                <Text style={styles.meta}>Tv</Text>
                 <Text style={styles.metaInfoSeparator}>•</Text>
-                <Text style={styles.meta}>{movie.runtime} min</Text>
+                <Text style={styles.meta}>{Tv.runtime} min</Text>
               </View>
 
               <Text style={styles.meta}>
-                Realesed on {readableDate(movie.release_date)}
+                Realesed on {readableDate(Tv.release_date)}
               </Text>
 
               {/* Genres */}
-              {movie.genres && movie.genres.length > 0 && (
+              {Tv.genres && Tv.genres.length > 0 && (
                 <View style={styles.genresContainer}>
-                  {movie.genres.map((genre) => (
+                  {Tv.genres.map((genre) => (
                     <View key={genre.id} style={styles.genreTag}>
                       <Text style={styles.genreText}>{genre.name}</Text>
                     </View>
@@ -230,7 +206,7 @@ const MovieDetail = () => {
           {/* Overview */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Overview</Text>
-            <Text style={styles.overview}>{movie.overview}</Text>
+            <Text style={styles.overview}>{Tv.overview}</Text>
           </View>
 
           {/* Cast */}
@@ -256,19 +232,10 @@ const MovieDetail = () => {
             </View>
           )}
 
-          <View style={styles.tabContainer}>
-            <ToggleTabs
-              activeTab={activeTab}
-              onToggle={handleTabChange}
-              options={[
-                { key: "similar", label: "Similar" },
-                { key: "recommended", label: "Recommended" },
-              ]}
-            />
-          </View>
-
+          {/* Similar Series */}
+          <Text style={styles.sectionTitle}>Similar</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {displayedMovies.map((item) => (
+            {similar.map((item) => (
               <ContentCard
                 key={item.id}
                 content={item}
@@ -504,4 +471,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MovieDetail;
+export default TvDetail;
