@@ -34,6 +34,14 @@ export default function TabsLayout() {
           headerShown: false,
         }}
       />
+
+      <Tabs.Screen
+        name="people"
+        options={{
+          title: "People",
+          headerShown: false,
+        }}
+      />
     </Tabs>
   );
 }
