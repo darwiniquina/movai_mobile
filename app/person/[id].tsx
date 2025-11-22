@@ -5,6 +5,7 @@ import { Person, PersonCredit } from "@/interfaces/Person";
 import api from "@/services/api";
 import readableDate from "@/services/readableDate";
 import { borderRadius, colors, fontSize, spacing } from "@/theme";
+import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -15,6 +16,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -136,6 +138,13 @@ const PersonDetail = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="chevron-back" size={26} color="#fff" />
+        </TouchableOpacity>
+
         {/* Header with Profile Image */}
         <View style={styles.headerContainer}>
           <Image
@@ -376,6 +385,15 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     marginBottom: spacing.md,
+  },
+  backButton: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    zIndex: 10,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    padding: 6,
+    borderRadius: 20,
   },
 });
 

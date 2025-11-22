@@ -156,6 +156,13 @@ const TvDetail = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="chevron-back" size={26} color="#fff" />
+        </TouchableOpacity>
+
         <View style={styles.backdropContainer}>
           {playing && trailer ? (
             <View>
@@ -558,6 +565,15 @@ const styles = StyleSheet.create({
   },
   watchlistButtonTextActive: {
     color: colors.background,
+  },
+  backButton: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    zIndex: 10,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    padding: 6,
+    borderRadius: 20,
   },
 });
 
