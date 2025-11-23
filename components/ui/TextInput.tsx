@@ -62,7 +62,7 @@ export default function TextInput({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: 15,
     width: "100%",
   },
   label: {
@@ -71,11 +71,11 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   input: {
-    height: 50,
-    paddingHorizontal: 16,
+    height: 40,
+    paddingHorizontal: 15,
     borderWidth: 0.5,
     borderRadius: 12,
-    fontSize: 16,
+    fontSize: 15,
     backgroundColor: colors.card,
     shadowColor: "#000",
     shadowOpacity: 0.05,
