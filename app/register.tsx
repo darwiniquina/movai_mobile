@@ -78,13 +78,14 @@ export default function Register() {
             error={errors.username}
           />
 
+          {/* 
           <TextInput
             label="Display name"
             placeholder="John Doe"
             value={display_name}
             onChangeText={setDisplayName}
             error={errors.display_name}
-          />
+          /> */}
 
           <TextInput
             label="Password *"
