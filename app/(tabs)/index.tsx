@@ -1,5 +1,4 @@
 import ContentCard from "@/components/ContentCard";
-import Button from "@/components/ui/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ToggleTabs from "@/components/ui/ToggleTabs";
 import { TMDB_IMAGE_BASE } from "@/constants/tmdb";
@@ -9,66 +8,68 @@ import { PersonCredit } from "@/interfaces/Person";
 import { Tv } from "@/interfaces/Tv";
 import { AuthContext } from "@/lib/AuthContext";
 import api from "@/services/api";
-import { colors, fontSize, spacing } from "@/theme";
+import { colors } from "@/theme";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useContext, useEffect, useState } from "react";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useCallback, useContext, useEffect, useState } from "react";
+import {
+  Dimensions,
+  Image,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+const { width, height } = Dimensions.get("window");
 
 export default function IndexPage() {
   const [activeTab, setActiveTab] = useState<"movies" | "tv">("movies");
   const [moviesData, setMoviesData] = useState<IndexSectionData | null>(null);
   const [tvData, setTvData] = useState<IndexSectionData | null>(null);
-  const [featured, setFeatured] = useState<Movie>();
+  const [featured, setFeatured] = useState<Movie | Tv>();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<boolean>(false);
   const { user } = useContext(AuthContext);
 
   const router = useRouter();
 
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+  // Removed moviesData from dependencies to prevent infinite loop
+  const fetchMovies = useCallback(async (isRefresh = false) => {
+    try {
+      const [popularMovies, topRatedMovies, upcomingMovies] = await Promise.all([
+        api.get("/movies/popular"),
+        api.get("/movies/top-rated"),
+        api.get("/movies/upcoming"),
+      ]);
 
-    async function fetchMovies() {
-      setLoading(true);
-      try {
-        const [popularMovies, topRatedMovies, upcomingMovies] =
-          await Promise.all([
-            api.get("/movies/popular"),
-            api.get("/movies/top-rated"),
-            api.get("/movies/upcoming"),
-          ]);
+      const popularResults = popularMovies.data?.data?.results || [];
+      const topRatedResults = topRatedMovies.data?.data?.results || [];
+      const upcomingResults = upcomingMovies.data?.data?.results || [];
 
-        const popularResults = popularMovies.data?.data?.results || [];
-        const topRatedResults = topRatedMovies.data?.data?.results || [];
-        const upcomingResults = upcomingMovies.data?.data?.results || [];
+      setMoviesData({
+        popular: popularResults,
+        topRated: topRatedResults,
+        upcoming: upcomingResults,
+      });
 
-        setMoviesData({
-          popular: popularResults,
-          topRated: topRatedResults,
-          upcoming: upcomingResults,
-        });
-
-        if (popularResults.length > 0) {
-          setFeatured(popularResults[0]);
-        }
-      } catch (error) {
-        console.error("Error fetching movies:", error);
-      } finally {
-        setLoading(false);
+      if (popularResults.length > 0) {
+        setFeatured(popularResults[0]);
       }
+      setError(false);
+    } catch (error) {
+      console.error("Error fetching movies:", error);
+      setError(true);
     }
+  }, []);
 
-    fetchMovies();
-  }, [user]);
-
-  const fetchTVShows = async () => {
-    if (tvData) return;
-
-    setLoading(true);
+  // Removed tvData from dependencies to prevent infinite loop
+  const fetchTVShows = useCallback(async (isRefresh = false) => {
     try {
       const [popularTv, topRatedTv] = await Promise.all([
         api.get("/tv/popular"),
@@ -86,26 +87,40 @@ export default function IndexPage() {
       if (popularResults.length > 0) {
         setFeatured(popularResults[0]);
       }
+      setError(false);
     } catch (error) {
       console.error("Error fetching TV shows:", error);
+      setError(true);
+    }
+  }, []);
+
+  const loadData = useCallback(async (isRefresh = false) => {
+    if (!user) return;
+
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      if (activeTab === "movies") {
+        await fetchMovies(isRefresh);
+      } else {
+        await fetchTVShows(isRefresh);
+      }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [user, activeTab, fetchMovies, fetchTVShows]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleToggle = (tab: "movies" | "tv") => {
     setActiveTab(tab);
-
-    if (tab === "tv") {
-      fetchTVShows();
-    }
-
-    if (tab === "movies") {
-      setFeatured(moviesData?.popular?.[0]);
-    }
-    if (tab === "tv") {
-      setFeatured(tvData?.popular?.[0]);
-    }
   };
 
   const handleCardPress = (item: Movie | Tv | PersonCredit) => {
@@ -119,41 +134,50 @@ export default function IndexPage() {
   const renderfeatured = () => {
     if (!featured) return null;
 
+    const title = 'title' in featured ? featured.title : featured.name;
+    // Use backdrop_path for a wider image, fallback to poster_path if needed
+    const imagePath = featured.backdrop_path || featured.poster_path;
+
     return (
-      <View style={styles.featuredCard}>
-        <Image
-          source={{ uri: `${TMDB_IMAGE_BASE}${featured.poster_path}` }}
-          style={styles.featuredImage}
-          resizeMode="cover"
-        />
-
-        <LinearGradient
-          colors={["rgba(0,0,0,0.1)", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.95)"]}
-          style={styles.gradientOverlay}
-        />
-
-        <View style={styles.featuredContent}>
-          {featured.vote_average != null && (
-            <View style={styles.ratingContainer}>
-              <Text style={styles.ratingIcon}>⭐</Text>
-              <Text style={styles.ratingText}>
-                {featured.vote_average.toFixed(1)}
-              </Text>
-              <Text style={styles.ratingOutOf}>/10</Text>
+      <View style={styles.featuredContainer}>
+        <View style={styles.featuredCard}>
+          <Image
+            source={{ uri: `${TMDB_IMAGE_BASE}${imagePath}` }}
+            style={styles.featuredImage}
+            resizeMode="cover"
+          />
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.2)", "rgba(0,0,0,0.8)"]}
+            style={styles.gradientOverlay}
+          />
+          
+          <View style={styles.featuredContent}>
+            <Text style={styles.featuredTitle} numberOfLines={2}>{title}</Text>
+            
+            <View style={styles.featuredMeta}>
+              <View style={styles.ratingContainer}>
+                <Text style={styles.ratingIcon}>⭐</Text>
+                <Text style={styles.ratingText}>
+                  {featured.vote_average ? featured.vote_average.toFixed(1) : 'N/A'}
+                </Text>
+              </View>
+              <Text style={styles.metaText}>•</Text>
+              <Text style={styles.metaText}>Featured</Text> 
             </View>
-          )}
 
-          <Text style={styles.featuredTitle}>
-            {featured.title || featured.name}
-          </Text>
+            {featured.overview && (
+              <Text style={styles.featuredOverview} numberOfLines={3}>
+                {featured.overview}
+              </Text>
+            )}
 
-          {featured.overview && (
-            <Text style={styles.featuredOverview} numberOfLines={3}>
-              {featured.overview}
-            </Text>
-          )}
-
-          <Button title="More Info" onPress={() => handleCardPress(featured)} />
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.detailsButton]}
+              onPress={() => handleCardPress(featured)}
+            >
+              <Text style={styles.detailsButtonText}>Details</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -165,7 +189,7 @@ export default function IndexPage() {
     return (
       <View style={styles.section} key={title}>
         <Text style={styles.sectionTitle}>{title}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
           {items.map((item) => (
             <ContentCard
               key={item.id}
@@ -180,46 +204,63 @@ export default function IndexPage() {
 
   const dataToRender = activeTab === "movies" ? moviesData : tvData;
 
-  if (loading && !dataToRender) {
+  if (loading && !dataToRender && !error) {
     return <LoadingSpinner />;
   }
 
-  if (!moviesData) {
-    return (
-      <View style={styles.emptyState}>
-        <Text style={styles.emptyStateText}>
-          No data available, try again later
-        </Text>
-      </View>
-    );
-  }
-
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView>
-        {renderfeatured()}
-
-        <View style={styles.tabsContainer}>
-          <ToggleTabs
-            activeTab={activeTab}
-            onToggle={handleToggle}
-            options={[
-              { key: "movies", label: "Movies" },
-              { key: "tv", label: "TV Shows" },
-            ]}
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadData(true)}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
-        </View>
+        }
+        contentContainerStyle={error && !dataToRender ? styles.centerContent : null}
+      >
+        {error && !dataToRender ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="cloud-offline-outline" size={64} color={colors.textSecondary} />
+            <Text style={styles.errorTitle}>Connection Error</Text>
+            <Text style={styles.errorText}>
+              We couldn't load the content. Please check your internet connection and try again.
+            </Text>
+            <TouchableOpacity style={styles.retryButton} onPress={() => loadData(true)}>
+              <Text style={styles.retryButtonText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            {renderfeatured()}
+            
+            <View style={styles.tabsWrapper}>
+              <ToggleTabs
+                activeTab={activeTab}
+                onToggle={handleToggle}
+                options={[
+                  { key: "movies", label: "Movies" },
+                  { key: "tv", label: "TV Shows" },
+                ]}
+              />
+            </View>
 
-        <View style={styles.contentContainer}>
-          {dataToRender?.popular &&
-            renderSection("Popular", dataToRender.popular)}
-          {dataToRender?.topRated &&
-            renderSection("Top Rated", dataToRender.topRated)}
-          {dataToRender?.upcoming &&
-            renderSection("Upcoming", dataToRender.upcoming)}
-        </View>
+            <View style={styles.contentContainer}>
+              {dataToRender?.popular &&
+                renderSection("Trending Now", dataToRender.popular)}
+              {dataToRender?.topRated &&
+                renderSection("Top Rated", dataToRender.topRated)}
+              {dataToRender?.upcoming &&
+                renderSection("Coming Soon", dataToRender.upcoming)}
+            </View>
+          </>
+        )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -228,102 +269,162 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  contentContainer: {
+  scrollView: {
     flex: 1,
   },
-  emptyState: {
+  centerContent: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: height,
   },
-  emptyStateText: {
-    fontSize: fontSize.lg,
-    color: colors.textSecondary,
-  },
-  section: {
-    margin: spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: fontSize.md,
-    fontWeight: "800",
+  featuredContainer: {
+    width: '100%',
+    paddingTop: 16,
     marginBottom: 20,
-    color: colors.text,
-    letterSpacing: 0.5,
   },
   featuredCard: {
-    width: "100%",
-    height: 550,
-    position: "relative",
-    backgroundColor: "#000",
+    height: 400,
+    width: '100%',
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: colors.card,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
   featuredImage: {
-    width: "100%",
-    height: "100%",
-    position: "absolute",
+    width: '100%',
+    height: '100%',
   },
   gradientOverlay: {
-    position: "absolute",
-    top: 0,
+    position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
+    height: '100%',
   },
   featuredContent: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 24,
-    paddingTop: 80,
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    gap: 4,
-  },
-  ratingIcon: {
-    fontSize: fontSize.sm,
-  },
-  ratingText: {
-    color: "#FFD700",
-    fontSize: fontSize.md,
-    fontWeight: "bold",
-  },
-  ratingOutOf: {
-    color: "#fff",
-    fontSize: fontSize.sm,
-    opacity: 0.7,
+    padding: 16,
+    paddingBottom: 16,
   },
   featuredTitle: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#fff",
+    color: colors.text,
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 5,
+  },
+  featuredMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
-    lineHeight: 34,
-    letterSpacing: 0.2,
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
+    gap: 8,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  ratingIcon: {
+    fontSize: 12,
+  },
+  ratingText: {
+    color: colors.text,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  metaText: {
+    color: colors.textSecondary,
+    fontSize: 14,
   },
   featuredOverview: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: "rgba(255, 255, 255, 0.9)",
-    marginBottom: 24,
-    letterSpacing: 0.2,
-    textShadowColor: "rgba(0, 0, 0, 0.6)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 14,
+    marginBottom: 16,
+    lineHeight: 20,
   },
-  tabsContainer: {
-    marginVertical: 20,
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  detailsButton: {
+    backgroundColor: colors.primary,
+  },
+  detailsButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  tabsWrapper: {
     paddingHorizontal: 16,
+    marginBottom: 10,
+  },
+  contentContainer: {
+    paddingBottom: 40,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginLeft: 16,
+    marginBottom: 16,
+  },
+  horizontalList: {
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorTitle: {
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  errorText: {
+    color: colors.textSecondary,
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 30,
+    lineHeight: 22,
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
