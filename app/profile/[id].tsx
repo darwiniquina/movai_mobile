@@ -1,3 +1,4 @@
+import EmojiAvatar from "@/components/EmojiAvatar";
 import api from "@/services/api";
 import { borderRadius, colors, fontSize, spacing } from "@/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -24,6 +25,7 @@ type UserProfile = {
   watchlist: WatchlistItem[];
   favorites: any[];
   reviews: any[];
+  emoji_avatar: string;
 };
 
 type WatchlistItem = {
@@ -209,10 +211,14 @@ export default function UserProfile() {
             <View style={styles.profileHeader}>
               <View style={styles.avatarContainer}>
                 <View style={styles.avatar}>
-                  <Ionicons
-                    name="person"
-                    size={40}
-                    color={colors.textSecondary}
+                  <EmojiAvatar
+                    emoji={user?.emoji_avatar || "🎬"}
+                    size={80}
+                    colors={{
+                      primary: colors.primary,
+                      card: colors.card,
+                      border: colors.border,
+                    }}
                   />
                 </View>
               </View>

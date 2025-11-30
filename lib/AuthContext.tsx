@@ -22,7 +22,8 @@ type AuthContextType = {
     bio: null | string,
     email: string,
     password: string,
-    password_confirmation: string
+    password_confirmation: string,
+    emoji_avatar: string
   ) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -149,7 +150,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     bio: null | string,
     email: string,
     password: string,
-    password_confirmation: string
+    password_confirmation: string,
+    emoji_avatar: string
   ) => {
     await wrapAsync(async () => {
       setErrors({});
@@ -178,6 +180,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email,
           password,
           password_confirmation,
+          emoji_avatar,
         });
 
         router.replace("/register-success");

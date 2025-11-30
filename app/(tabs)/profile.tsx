@@ -1,3 +1,4 @@
+import EmojiAvatar from "@/components/EmojiAvatar";
 import Button from "@/components/ui/Button";
 import { AuthContext } from "@/lib/AuthContext";
 import api from "@/services/api";
@@ -23,6 +24,7 @@ type UserProfile = {
   username: string;
   bio: string | null;
   public_profile: boolean;
+  emoji_avatar: string;
   email: string;
   email_verified_at: string | null;
   to_watch_count: number;
@@ -235,10 +237,14 @@ export default function Profile() {
             <View style={styles.profileHeader}>
               <View style={styles.avatarContainer}>
                 <View style={styles.avatar}>
-                  <Ionicons
-                    name="person"
-                    size={40}
-                    color={colors.textSecondary}
+                  <EmojiAvatar
+                    emoji={user?.emoji_avatar || "🎬"}
+                    size={80}
+                    colors={{
+                      primary: colors.primary,
+                      card: colors.card,
+                      border: colors.border,
+                    }}
                   />
                 </View>
               </View>

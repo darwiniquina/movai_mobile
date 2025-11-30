@@ -1,3 +1,4 @@
+import EmojiProfile from "@/components/EmojiProfile";
 import Button from "@/components/ui/Button";
 import TextInput from "@/components/ui/TextInput";
 import { colors, fontSize } from "@/theme";
@@ -23,6 +24,7 @@ export default function Register() {
   const [display_name, setDisplayName] = useState("");
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
+  const [emoji_avatar, setProfileEmoji] = useState("🎬");
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -39,6 +41,13 @@ export default function Register() {
           }}
           keyboardShouldPersistTaps="handled"
         >
+          <EmojiProfile
+            selectedEmoji={emoji_avatar}
+            onEmojiSelect={setProfileEmoji}
+            size={100}
+            colors={colors}
+          />
+
           <Text
             style={{
               fontSize: fontSize.xxl,
@@ -78,15 +87,6 @@ export default function Register() {
             error={errors.username}
           />
 
-          {/* 
-          <TextInput
-            label="Display name"
-            placeholder="John Doe"
-            value={display_name}
-            onChangeText={setDisplayName}
-            error={errors.display_name}
-          /> */}
-
           <TextInput
             label="Password *"
             placeholder="••••••••"
@@ -124,7 +124,8 @@ export default function Register() {
                 bio,
                 email,
                 password,
-                password_confirmation
+                password_confirmation,
+                emoji_avatar
               )
             }
           />
