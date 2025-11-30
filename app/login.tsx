@@ -1,7 +1,7 @@
 import TextInput from "@/components/ui/TextInput";
 import { colors, fontSize } from "@/theme";
 import { useRouter } from "expo-router";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -17,13 +17,6 @@ export default function Login() {
   const { login, errors, loading } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const [showPassword, setShowPassword] = useState(false);
-
-  useEffect(() => {
-    setEmail("test@example.com");
-    setPassword("secret");
-  }, []);
 
   return (
     <KeyboardAvoidingView>
