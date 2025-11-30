@@ -2,8 +2,10 @@ import TextInput from "@/components/ui/TextInput";
 import { colors, fontSize } from "@/theme";
 import { useRouter } from "expo-router";
 import React, { useContext, useState } from "react";
+
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -30,6 +32,15 @@ export default function Login() {
           padding: 20,
         }}
       >
+        <Image
+          source={require("@/assets/images/icon.png")}
+          style={{
+            width: 120,
+            height: 120,
+            marginBottom: 20,
+            borderRadius: 24,
+          }}
+        />
         <Text
           style={{
             fontSize: fontSize.xxl,
@@ -50,6 +61,7 @@ export default function Login() {
           value={email}
           onChangeText={setEmail}
           error={errors.email}
+          placeholder="example@gmail.com"
         />
 
         <TextInput
@@ -58,6 +70,7 @@ export default function Login() {
           onChangeText={setPassword}
           secureTextEntry
           error={errors.password}
+          placeholder="••••••••"
         />
 
         {errors.general && (
