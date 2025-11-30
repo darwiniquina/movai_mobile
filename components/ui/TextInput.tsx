@@ -1,6 +1,13 @@
 import { colors } from "@/theme";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { TextInput as RNTextInput, StyleSheet, Text, View } from "react-native";
+import {
+    Pressable,
+    TextInput as RNTextInput,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
 
 type TextInputProps = {
   label: string;
@@ -28,24 +35,14 @@ export default function TextInput({
   textAlignVertical = "top",
 }: TextInputProps) {
   const [isFocused, setIsFocused] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   return (
     <View style={styles.container}>
       <Text style={[styles.label]}>{label}</Text>
-      <RNTextInput
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={secureTextEntry}
-        keyboardType={keyboardType}
-        placeholder={placeholder}
-        placeholderTextColor={colors.textSecondary}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        multiline={multiline}
-        numberOfLines={numberOfLines}
-        textAlignVertical={textAlignVertical}
+      <View
         style={[
-          styles.input,
+          styles.inputWrapper,
           {
             borderColor: error
               ? colors.error
@@ -54,7 +51,34 @@ export default function TextInput({
               : "#ccc",
           },
         ]}
-      />
+      >
+        <RNTextInput
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry && !isPasswordVisible}
+          keyboardType={keyboardType}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textSecondary}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          multiline={multiline}
+          numberOfLines={numberOfLines}
+          textAlignVertical={textAlignVertical}
+          style={styles.input}
+        />
+        {secureTextEntry && (
+          <Pressable
+            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+            style={styles.eyeIcon}
+          >
+            <Ionicons
+              name={isPasswordVisible ? "eye" : "eye-off"}
+              size={20}
+              color={colors.textSecondary}
+            />
+          </Pressable>
+        )}
+      </View>
       {error && <Text style={[styles.error]}>{error}</Text>}
     </View>
   );
@@ -70,18 +94,27 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     color: colors.text,
   },
-  input: {
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
     height: 40,
     paddingHorizontal: 15,
     borderWidth: 0.5,
     borderRadius: 12,
-    fontSize: 15,
     backgroundColor: colors.card,
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
     color: colors.text,
+    height: "100%",
+  },
+  eyeIcon: {
+    marginLeft: 10,
   },
   error: {
     color: colors.error,
