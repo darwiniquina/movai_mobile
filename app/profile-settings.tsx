@@ -1,3 +1,5 @@
+import CustomModal from "@/components/CustomModal";
+import EmojiProfile from "@/components/EmojiProfile";
 import Button from "@/components/ui/Button";
 import TextInput from "@/components/ui/TextInput";
 import { AuthContext } from "@/lib/AuthContext";
@@ -7,7 +9,6 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import React, { useContext, useEffect, useState } from "react";
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -22,12 +23,21 @@ type UserProfile = {
   username: string;
   bio: string | null;
   public_profile: boolean;
+  emoji_avatar: string;
   email: string;
   email_verified_at: string | null;
   to_watch_count: number;
   completed_count: number;
   created_at: string;
   updated_at: string;
+};
+
+type ModalState = {
+  visible: boolean;
+  type: "success" | "error" | "warning" | "info" | "confirm";
+  title: string;
+  message: string;
+  onConfirm?: () => void;
 };
 
 export default function ProfileSettings() {
@@ -40,14 +50,20 @@ export default function ProfileSettings() {
     "profile"
   );
 
-  // Profile form state
+  const [modal, setModal] = useState<ModalState>({
+    visible: false,
+    type: "info",
+    title: "",
+    message: "",
+  });
+
   const [profileForm, setProfileForm] = useState({
     name: "",
     bio: "",
+    emoji_avatar: "🎬",
     public_profile: true,
   });
 
-  // Password form state
   const [passwordForm, setPasswordForm] = useState({
     current_password: "",
     password: "",
@@ -63,10 +79,30 @@ export default function ProfileSettings() {
       setProfileForm({
         name: user.name,
         bio: user.bio || "",
+        emoji_avatar: user.emoji_avatar || "🎬",
         public_profile: user.public_profile,
       });
     }
   }, [user]);
+
+  const showModal = (
+    type: ModalState["type"],
+    title: string,
+    message: string,
+    onConfirm?: () => void
+  ) => {
+    setModal({
+      visible: true,
+      type,
+      title,
+      message,
+      onConfirm,
+    });
+  };
+
+  const closeModal = () => {
+    setModal((prev) => ({ ...prev, visible: false }));
+  };
 
   const fetchUserProfile = async () => {
     try {
@@ -75,7 +111,7 @@ export default function ProfileSettings() {
       setUser(response.data.user);
     } catch (error) {
       console.error("Error fetching user profile:", error);
-      Alert.alert("Error", "Failed to load profile");
+      showModal("error", "Error", "Failed to load profile. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -86,12 +122,18 @@ export default function ProfileSettings() {
       setUpdating(true);
       const response = await api.post("/user", profileForm);
       setUser(response.data.user);
-      Alert.alert("Success", "Profile updated successfully");
+      showModal(
+        "success",
+        "Success",
+        "Your profile has been updated successfully!"
+      );
     } catch (error: any) {
       console.error("Error updating profile:", error);
-      Alert.alert(
-        "Error",
-        error.response?.data?.message || "Failed to update profile"
+      showModal(
+        "error",
+        "Update Failed",
+        error.response?.data?.message ||
+          "Failed to update profile. Please try again."
       );
     } finally {
       setUpdating(false);
@@ -99,12 +141,25 @@ export default function ProfileSettings() {
   };
 
   const handleUpdatePassword = async () => {
-    try {
-      if (passwordForm.password !== passwordForm.password_confirmation) {
-        Alert.alert("Error", "Passwords do not match");
-        return;
-      }
+    if (passwordForm.password !== passwordForm.password_confirmation) {
+      showModal(
+        "error",
+        "Password Mismatch",
+        "The passwords you entered do not match. Please try again."
+      );
+      return;
+    }
 
+    if (passwordForm.password.length < 8) {
+      showModal(
+        "error",
+        "Invalid Password",
+        "Password must be at least 8 characters long."
+      );
+      return;
+    }
+
+    try {
       setUpdating(true);
       await api.post("/user/password", passwordForm);
 
@@ -114,12 +169,18 @@ export default function ProfileSettings() {
         password_confirmation: "",
       });
 
-      Alert.alert("Success", "Password updated successfully");
+      showModal(
+        "success",
+        "Success",
+        "Your password has been updated successfully!"
+      );
     } catch (error: any) {
       console.error("Error updating password:", error);
-      Alert.alert(
-        "Error",
-        error.response?.data?.message || "Failed to update password"
+      showModal(
+        "error",
+        "Update Failed",
+        error.response?.data?.message ||
+          "Failed to update password. Please check your current password."
       );
     } finally {
       setUpdating(false);
@@ -127,10 +188,7 @@ export default function ProfileSettings() {
   };
 
   const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Logout", onPress: logout, style: "destructive" },
-    ]);
+    showModal("confirm", "Logout", "Are you sure you want to logout?", logout);
   };
 
   return (
@@ -206,6 +264,19 @@ export default function ProfileSettings() {
         {activeSection === "profile" ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Profile Information</Text>
+
+            {/* Emoji Profile Picker */}
+            <View style={styles.emojiContainer}>
+              <Text style={styles.emojiLabel}>Profile Avatar</Text>
+              <EmojiProfile
+                selectedEmoji={profileForm.emoji_avatar}
+                onEmojiSelect={(emoji) =>
+                  setProfileForm((prev) => ({ ...prev, emoji_avatar: emoji }))
+                }
+                size={100}
+                colors={colors}
+              />
+            </View>
 
             <TextInput
               label="Display Name"
@@ -343,6 +414,17 @@ export default function ProfileSettings() {
           />
         </View>
       </ScrollView>
+
+      {/* Custom Modal */}
+      <CustomModal
+        visible={modal.visible}
+        onClose={closeModal}
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={modal.onConfirm}
+        colors={colors}
+      />
     </SafeAreaView>
   );
 }
@@ -410,6 +492,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: "bold",
+    color: colors.text,
+    marginBottom: spacing.md,
+  },
+  emojiContainer: {
+    alignItems: "center",
+    marginBottom: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  emojiLabel: {
+    fontSize: fontSize.md,
+    fontWeight: "600",
     color: colors.text,
     marginBottom: spacing.md,
   },
